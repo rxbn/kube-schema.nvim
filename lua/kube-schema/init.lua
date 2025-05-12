@@ -7,10 +7,11 @@ local k8s_combined_schema_template = {
 M._schema_paths = {}
 
 local builtin_resources = require("kube-schema.builtin_resources")
+local crd_kinds = require("kube-schema.crd_resources")
 
 ---@param bufnr integer
----@return string | nil
-M.get_kubernetes_json_schema = function(bufnr)
+---@return string[] | nil, string[] | nil
+M.extract_k8s_api_and_kind = function(bufnr)
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
 	local api_versions = {}
@@ -28,6 +29,13 @@ M.get_kubernetes_json_schema = function(bufnr)
 		end
 	end
 
+	return api_versions, kinds
+end
+
+---@param bufnr integer
+---@param api_versions string[]
+---@param kinds string[]
+M.generate_k8s_combined_schema = function(bufnr, api_versions, kinds)
 	local file_path = vim.api.nvim_buf_get_name(bufnr)
 	local file_suffix = file_path:gsub("[/:\\]", "_")
 	local k8s_combined_schema_path = vim.fn.stdpath("cache") .. "/k8s_combined_schema" .. file_suffix .. ".json"
@@ -37,7 +45,9 @@ M.get_kubernetes_json_schema = function(bufnr)
 	for i, api_version in ipairs(api_versions) do
 		local kind = kinds[i]
 		if api_version and kind then
-			local is_builtin = vim.tbl_contains(builtin_resources, kind)
+			local api_group = api_version:match("^[^/]+")
+			local is_builtin = vim.tbl_contains(builtin_resources, api_version .. ":" .. kind)
+			local is_crd = vim.tbl_contains(crd_kinds, api_version .. ":" .. kind)
 
 			if is_builtin then
 				table.insert(k8s_combined_schema_template.oneOf, {
@@ -45,21 +55,17 @@ M.get_kubernetes_json_schema = function(bufnr)
 						.. string.lower(kind)
 						.. ".json",
 				})
-			else
-				local api_group = api_version:match("^[^/]+")
-				local api_version_suffix = api_version:match("/(v%d+.*)")
-
-				if api_group and api_version_suffix then
-					table.insert(k8s_combined_schema_template.oneOf, {
-						["$ref"] = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/"
-							.. api_group
-							.. "/"
-							.. string.lower(kind)
-							.. "_"
-							.. api_version_suffix
-							.. ".json",
-					})
-				end
+			elseif is_crd then
+				local api_version_suffix = api_version:match("/?(v%d+.*)")
+				table.insert(k8s_combined_schema_template.oneOf, {
+					["$ref"] = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/"
+						.. api_group
+						.. "/"
+						.. string.lower(kind)
+						.. "_"
+						.. api_version_suffix
+						.. ".json",
+				})
 			end
 		end
 	end
@@ -69,12 +75,11 @@ M.get_kubernetes_json_schema = function(bufnr)
 	if cache_file then
 		cache_file:write(json_output)
 		cache_file:close()
-		M._schema_paths[k8s_combined_schema_path] = true
+		table.insert(M._schema_paths, k8s_combined_schema_path)
 	else
-		vim.api.nvim_echo(
-			{ { "Failed to write Kubernetes schema cache file: " .. k8s_combined_schema_path, "ErrorMsg" } },
-			true,
-			{}
+		vim.notify(
+			"Failed to create cache file for Kubernetes schema: " .. k8s_combined_schema_path,
+			vim.log.levels.ERROR
 		)
 	end
 
@@ -86,16 +91,14 @@ M.get_kubernetes_json_schema = function(bufnr)
 end
 
 ---@param bufnr integer
-M.schema = function(bufnr)
-	local client = vim.lsp.get_clients({ bufnr = bufnr, name = "yamlls" })[1]
-	if not client then
-		return
-	end
-
+---@param client vim.lsp.Client
+---@param api_versions string[]
+---@param kinds string[]
+M.update_k8s_yaml_schema = function(bufnr, client, api_versions, kinds)
 	local buf_uri = vim.uri_from_bufnr(bufnr)
 	local settings = client.settings
 	local override = {}
-	local schema = M.get_kubernetes_json_schema(bufnr)
+	local schema = M.generate_k8s_combined_schema(bufnr, api_versions, kinds)
 	if not schema then
 		return
 	end
@@ -112,15 +115,21 @@ M.schema = function(bufnr)
 		vim.notify("Failed to update YAML schema for Kubernetes", vim.log.levels.ERROR)
 	end
 
-	vim.lsp.buf_request_sync(bufnr, "yaml/get/jsonSchema")
+	local error = client:request_sync("yaml/get/jsonSchema", {})
+	if error and error.err then
+		vim.notify("Failed to get Kubernetes schema: " .. error.err, vim.log.levels.ERROR)
+	end
 end
+
+-- SETUP
 
 M.setup = function()
 	local autogroup = vim.api.nvim_create_augroup("kube-schema", { clear = true })
+	-- TODO: we should only create this autocmd if its actually a k8s file
 	vim.api.nvim_create_autocmd("VimLeavePre", {
 		group = autogroup,
 		callback = function()
-			for schema, _ in pairs(M._schema_paths) do
+			for _, schema in pairs(M._schema_paths) do
 				local cache_file = io.open(schema, "r")
 				if cache_file then
 					cache_file:close()
@@ -134,16 +143,43 @@ M.setup = function()
 		group = autogroup,
 		pattern = { "*.yaml", "*.yml" },
 		callback = function(ev)
+			local client = vim.lsp.get_client_by_id(ev.data.client_id)
+			if not client or client.name ~= "yamlls" then
+				return
+			end
+
+			local api_versions, kinds = M.extract_k8s_api_and_kind(ev.buf)
+			if not api_versions or not kinds then
+				return
+			end
+
 			vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
 				group = autogroup,
 				buffer = ev.buf,
 				callback = function()
-					M.schema(ev.buf)
+					api_versions, kinds = M.extract_k8s_api_and_kind(ev.buf)
+					if not api_versions or not kinds then
+						return
+					end
+					M.update_k8s_yaml_schema(ev.buf, client, api_versions, kinds)
 				end,
 			})
-			M.schema(ev.buf)
+
+			M.update_k8s_yaml_schema(ev.buf, client, api_versions, kinds)
 		end,
 	})
+end
+
+M.configure_yamlls = function()
+	return {
+		settings = {
+			yaml = {
+				schemas = {
+					kubernetes = "",
+				},
+			},
+		},
+	}
 end
 
 return M
