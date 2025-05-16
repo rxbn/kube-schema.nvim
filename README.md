@@ -41,6 +41,18 @@ In order to prevent the "Matches multiple schemas when only one must validate" e
 yamlls = require("kube-schema").configure_yamlls(),
 ```
 
+You can also pass custom settings to yamlls, they will be merged with the default settings:
+
+```lua
+yamlls = require("kube-schema").configure_yamlls({
+    settings = {
+        yaml = {
+            validate = true,
+        },
+    },
+})
+```
+
 You can also use the following manual configuration:
 
 ```lua

@@ -169,8 +169,12 @@ M.setup = function()
 	})
 end
 
-M.configure_yamlls = function()
-	return {
+---@param config table | nil
+---@return table
+M.configure_yamlls = function(config)
+	config = config or {}
+
+	config = vim.tbl_deep_extend("force", config, {
 		settings = {
 			yaml = {
 				schemas = {
@@ -178,7 +182,9 @@ M.configure_yamlls = function()
 				},
 			},
 		},
-	}
+	})
+
+	return config
 end
 
 return M
