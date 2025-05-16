@@ -1684,7 +1684,6 @@ return {
   "source.toolkit.fluxcd.io/v1:HelmRepository",
   "source.toolkit.fluxcd.io/v1beta1:Bucket",
   "source.toolkit.fluxcd.io/v1beta1:GitRepository",
-  "source.toolkit.fluxcd.io/v1beta1:GitRepository",
   "source.toolkit.fluxcd.io/v1beta1:HelmChart",
   "source.toolkit.fluxcd.io/v1beta1:HelmRepository",
   "source.toolkit.fluxcd.io/v1beta2:Bucket",

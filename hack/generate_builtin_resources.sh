@@ -12,5 +12,5 @@ echo "-- DO NOT EDIT"
 echo "return {"
 while read -r kind; do
   echo "  \"$kind\","
-done <<<"$kinds" | uniq | sort
+done <<<"$kinds" | LC_ALL=C sort -u
 echo "}"
