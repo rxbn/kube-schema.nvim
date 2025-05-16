@@ -3,6 +3,8 @@
 Dynamically inject Kubernetes and CRD schemas into [yaml-language-server](https://github.com/redhat-developer/yaml-language-server) for YAML files in Neovim.
 Get validation and completion for your Kubernetes manifests and CRDs, automatically.
 
+![kube-schema nvim](https://github.com/user-attachments/assets/8f2626c7-c2ca-424e-abb9-1dbb60da464e)
+
 ---
 
 ## ✨ Features
