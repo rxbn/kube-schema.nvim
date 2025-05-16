@@ -22,10 +22,10 @@ M.extract_k8s_api_and_kind = function(bufnr)
 		local kind = line:match("^kind:%s*(%S+)")
 
 		if api_version then
-			table.insert(api_versions, api_version)
+			table.insert(api_versions, string.lower(api_version))
 		end
 		if kind then
-			table.insert(kinds, kind)
+			table.insert(kinds, string.lower(kind))
 		end
 	end
 
@@ -52,7 +52,7 @@ M.generate_k8s_combined_schema = function(bufnr, api_versions, kinds)
 			if is_builtin then
 				table.insert(k8s_combined_schema_template.oneOf, {
 					["$ref"] = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master-standalone-strict/"
-						.. string.lower(kind)
+						.. kind
 						.. ".json",
 				})
 			elseif is_crd then
@@ -61,7 +61,7 @@ M.generate_k8s_combined_schema = function(bufnr, api_versions, kinds)
 					["$ref"] = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/"
 						.. api_group
 						.. "/"
-						.. string.lower(kind)
+						.. kind
 						.. "_"
 						.. api_version_suffix
 						.. ".json",
