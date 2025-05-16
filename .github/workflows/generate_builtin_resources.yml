@@ -1,0 +1,30 @@
+---
+name: Generate builtin Kubernetes resources
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Generate
+        run: bash ./hack/generate_builtin_resources.sh > ./lua/kube-schema/builtin_resources.lua
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "builtin-resources"
+          delete-branch: true
+          title: "update builtin Kubernetes resources"
+          signoff: true
+          committer: "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
+          author: "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
+          assignees: "rxbn"
+          commit-message: "chore: update builtin Kubernetes resources"
+          body: |
+            Update builtin Kubernetes resources.

@@ -1,0 +1,35 @@
+---
+name: Generate CRD resources
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Generate
+        run: |
+          # renovate depName=mikefarah/yq
+          wget -O /tmp/yq https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_linux_amd64
+          chmod +x /tmp/yq
+          export PATH=$PATH:/tmp
+          bash ./hack/generate_crd_resources.sh > ./lua/kube-schema/crd_resources.lua
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "crd-resources"
+          delete-branch: true
+          title: "update crd resources"
+          signoff: true
+          committer: "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
+          author: "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
+          assignees: "rxbn"
+          commit-message: "chore: update crd resources"
+          body: |
+            Update crd resources.
