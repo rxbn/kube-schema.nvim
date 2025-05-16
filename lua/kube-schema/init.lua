@@ -35,6 +35,7 @@ end
 ---@param bufnr integer
 ---@param api_versions string[]
 ---@param kinds string[]
+---@return string | nil
 M.generate_k8s_combined_schema = function(bufnr, api_versions, kinds)
 	local file_path = vim.api.nvim_buf_get_name(bufnr)
 	local file_suffix = file_path:gsub("[/:\\]", "_")
@@ -96,7 +97,6 @@ end
 ---@param kinds string[]
 M.update_k8s_yaml_schema = function(bufnr, client, api_versions, kinds)
 	local buf_uri = vim.uri_from_bufnr(bufnr)
-	local settings = client.settings
 	local override = {}
 	local schema = M.generate_k8s_combined_schema(bufnr, api_versions, kinds)
 	if not schema then
@@ -105,10 +105,9 @@ M.update_k8s_yaml_schema = function(bufnr, client, api_versions, kinds)
 
 	override[schema] = buf_uri
 
-	settings = vim.tbl_deep_extend("force", settings, { yaml = { schemas = override } })
-	client.settings = vim.tbl_deep_extend("force", settings, { yaml = { schemas = override } })
+	client.settings = vim.tbl_deep_extend("force", client.settings, { yaml = { schemas = override } })
 	local success = client:notify("workspace/didChangeConfiguration", {
-		settings = settings,
+		settings = client.settings,
 	})
 
 	if not success then
