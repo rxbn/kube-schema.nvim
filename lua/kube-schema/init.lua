@@ -153,6 +153,8 @@ M.setup = function()
 				return
 			end
 
+			M.update_k8s_yaml_schema(ev.buf, client, api_versions, kinds)
+
 			vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
 				group = autogroup,
 				buffer = ev.buf,
@@ -164,8 +166,6 @@ M.setup = function()
 					M.update_k8s_yaml_schema(ev.buf, client, api_versions, kinds)
 				end,
 			})
-
-			M.update_k8s_yaml_schema(ev.buf, client, api_versions, kinds)
 		end,
 	})
 end
