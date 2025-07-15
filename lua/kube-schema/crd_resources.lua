@@ -813,6 +813,7 @@ return {
   "generators.external-secrets.io/v1alpha1:generatorstate",
   "generators.external-secrets.io/v1alpha1:githubaccesstoken",
   "generators.external-secrets.io/v1alpha1:grafana",
+  "generators.external-secrets.io/v1alpha1:mfa",
   "generators.external-secrets.io/v1alpha1:password",
   "generators.external-secrets.io/v1alpha1:quayaccesstoken",
   "generators.external-secrets.io/v1alpha1:stssessiontoken",
