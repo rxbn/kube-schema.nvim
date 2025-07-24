@@ -100,6 +100,8 @@ return {
   "certificates.k8s.io/v1alpha1:clustertrustbundle",
   "certificates.k8s.io/v1alpha1:clustertrustbundlelist",
   "certificates.k8s.io/v1alpha1:deleteoptions",
+  "certificates.k8s.io/v1alpha1:podcertificaterequest",
+  "certificates.k8s.io/v1alpha1:podcertificaterequestlist",
   "certificates.k8s.io/v1alpha1:watchevent",
   "certificates.k8s.io/v1beta1:clustertrustbundle",
   "certificates.k8s.io/v1beta1:clustertrustbundlelist",
