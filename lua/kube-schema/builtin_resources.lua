@@ -255,8 +255,6 @@ return {
   "storage.k8s.io/v1:volumeattributesclasslist",
   "storage.k8s.io/v1:watchevent",
   "storage.k8s.io/v1alpha1:deleteoptions",
-  "storage.k8s.io/v1alpha1:volumeattributesclass",
-  "storage.k8s.io/v1alpha1:volumeattributesclasslist",
   "storage.k8s.io/v1alpha1:watchevent",
   "storage.k8s.io/v1beta1:deleteoptions",
   "storage.k8s.io/v1beta1:volumeattributesclass",
