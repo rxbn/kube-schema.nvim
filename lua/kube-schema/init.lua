@@ -1,13 +1,70 @@
 local M = {}
 
+local uv = vim.uv or vim.loop
+
 local k8s_combined_schema_template = {
 	oneOf = {},
 }
 
 M._schema_paths = {}
+M._debounce_timers = {}
+M._debounce_delay = 250
 
 local builtin_resources = require("kube-schema.builtin_resources")
 local crd_kinds = require("kube-schema.crd_resources")
+
+local function clear_debounce_timer(bufnr)
+	local timer = M._debounce_timers[bufnr]
+	if timer then
+		timer:stop()
+		timer:close()
+		M._debounce_timers[bufnr] = nil
+	end
+end
+
+local function debounce_schema_update(bufnr, callback)
+	if not uv or not uv.new_timer then
+		callback()
+		return
+	end
+
+	clear_debounce_timer(bufnr)
+
+	local timer = uv.new_timer()
+	if not timer then
+		callback()
+		return
+	end
+
+	M._debounce_timers[bufnr] = timer
+
+	timer:start(M._debounce_delay, 0, function()
+		timer:stop()
+		timer:close()
+		if M._debounce_timers[bufnr] == timer then
+			M._debounce_timers[bufnr] = nil
+		end
+		vim.schedule(callback)
+	end)
+end
+
+local function refresh_schema(bufnr, client_id)
+	if not vim.api.nvim_buf_is_valid(bufnr) then
+		return
+	end
+
+	local client = vim.lsp.get_client_by_id(client_id)
+	if not client or client.name ~= "yamlls" or (client.is_stopped and client:is_stopped()) then
+		return
+	end
+
+	local api_versions, kinds = M.extract_k8s_api_and_kind(bufnr)
+	if not api_versions or not kinds then
+		return
+	end
+
+	M.update_k8s_yaml_schema(bufnr, client, api_versions, kinds)
+end
 
 ---@param bufnr integer
 ---@return string[] | nil, string[] | nil
@@ -135,6 +192,10 @@ M.setup = function()
 					os.remove(schema)
 				end
 			end
+
+			for bufnr in pairs(M._debounce_timers) do
+				clear_debounce_timer(bufnr)
+			end
 		end,
 	})
 
@@ -147,22 +208,31 @@ M.setup = function()
 				return
 			end
 
-			local api_versions, kinds = M.extract_k8s_api_and_kind(ev.buf)
-			if not api_versions or not kinds then
-				return
-			end
+			local bufnr = ev.buf
+			local client_id = ev.data.client_id
 
-			M.update_k8s_yaml_schema(ev.buf, client, api_versions, kinds)
+			refresh_schema(bufnr, client_id)
 
 			vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
 				group = autogroup,
-				buffer = ev.buf,
+				buffer = bufnr,
 				callback = function()
-					api_versions, kinds = M.extract_k8s_api_and_kind(ev.buf)
-					if not api_versions or not kinds then
+					if not vim.api.nvim_buf_is_valid(bufnr) then
+						clear_debounce_timer(bufnr)
 						return
 					end
-					M.update_k8s_yaml_schema(ev.buf, client, api_versions, kinds)
+
+					debounce_schema_update(bufnr, function()
+						refresh_schema(bufnr, client_id)
+					end)
+				end,
+			})
+
+			vim.api.nvim_create_autocmd("BufWipeout", {
+				group = autogroup,
+				buffer = bufnr,
+				callback = function()
+					clear_debounce_timer(bufnr)
 				end,
 			})
 		end,
