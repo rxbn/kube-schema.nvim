@@ -45,6 +45,7 @@ If you want to tune the behavior, `setup()` accepts a few options:
 | ------------- | ------ | ----------------------------- | ----------- |
 | `debounce_ms` | number | `250`                         | Delay (in ms) before refreshing schemas after text changes. Set to `0` to disable debouncing altogether. |
 | `cache_dir`   | string | `vim.fn.stdpath("cache")`     | Directory where the combined schema files are stored. |
+| `notifications` | boolean | `true`                     | Whether to surface schema updates/errors via fidget.nvim (when available) or fall back to `vim.notify`. |
 
 Example:
 
@@ -52,10 +53,11 @@ Example:
 require("kube-schema").setup({
   debounce_ms = 150,
   cache_dir = vim.fn.stdpath("data") .. "/kube-schema",
+  notifications = false,
 })
 ```
 
-> ℹ️ If [fidget.nvim](https://github.com/j-hui/fidget.nvim) is installed, kube-schema.nvim uses it to surface schema refresh progress and errors automatically.
+> ℹ️ If [fidget.nvim](https://github.com/j-hui/fidget.nvim) is installed, kube-schema.nvim uses it to surface schema refresh progress and errors automatically. Set `notifications = false` to disable all status messages.
 
 If you want to customize or extend further, PRs and issues are always welcome!
 

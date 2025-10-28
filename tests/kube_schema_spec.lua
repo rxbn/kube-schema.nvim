@@ -178,4 +178,29 @@ describe("kube-schema.nvim", function()
 		assert.equals(1, #fidget_messages)
 		assert.matches("applied schema", fidget_messages[1].msg)
 	end)
+
+	it("allows disabling notifications", function()
+		local buf = new_buffer("deployment.yaml", {
+			"apiVersion: apps/v1",
+			"kind: Deployment",
+		})
+
+		local client = make_client()
+		vim.lsp.get_client_by_id = function()
+			return client
+		end
+
+		kube_schema.config.notifications = false
+
+		local fallback_called = false
+		vim.notify = function()
+			fallback_called = true
+		end
+
+		local apis, kinds = kube_schema.extract_k8s_api_and_kind(buf)
+		local ok = kube_schema.update_k8s_yaml_schema(buf, client, apis, kinds)
+
+		assert.is_true(ok)
+		assert.is_false(fallback_called)
+	end)
 end)

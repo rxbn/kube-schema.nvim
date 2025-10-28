@@ -5,6 +5,7 @@ local uv = vim.uv or vim.loop
 local default_config = {
 	cache_dir = vim.fn.stdpath("cache"),
 	debounce_ms = 250,
+	notifications = true,
 }
 
 local k8s_combined_schema_template = {
@@ -14,6 +15,7 @@ local k8s_combined_schema_template = {
 M.config = {
 	cache_dir = default_config.cache_dir,
 	debounce_ms = default_config.debounce_ms,
+	notifications = default_config.notifications,
 }
 
 M._schema_paths = {}
@@ -67,6 +69,10 @@ local function ensure_fidget_notifier()
 end
 
 local function notify(message, level)
+	if M.config.notifications == false then
+		return
+	end
+
 	level = level or vim.log.levels.INFO
 	local notifier = ensure_fidget_notifier()
 	if type(notifier) == "function" then
@@ -457,6 +463,9 @@ M.setup = function(opts)
 	if opts.debounce_ms ~= nil then
 		opts.debounce_ms = tonumber(opts.debounce_ms) or default_config.debounce_ms
 	end
+	if opts.notifications ~= nil then
+		opts.notifications = not not opts.notifications
+	end
 
 	M.config = vim.tbl_deep_extend("force", {}, default_config, M.config or {}, opts)
 
@@ -466,6 +475,9 @@ M.setup = function(opts)
 
 	if type(M.config.debounce_ms) ~= "number" or M.config.debounce_ms < 0 then
 		M.config.debounce_ms = default_config.debounce_ms
+	end
+	if type(M.config.notifications) ~= "boolean" then
+		M.config.notifications = default_config.notifications
 	end
 
 	local autogroup = vim.api.nvim_create_augroup("kube-schema", { clear = true })
