@@ -25,6 +25,30 @@ M._fidget_notify = nil
 local builtin_resources = require("kube-schema.builtin_resources")
 local crd_kinds = require("kube-schema.crd_resources")
 
+local function joinpath(...)
+	if vim.fs and vim.fs.joinpath then
+		return vim.fs.joinpath(...)
+	end
+
+	local sep = package.config:sub(1, 1)
+	local parts = { ... }
+	local path = (parts[1] or ""):gsub("[/\\]", sep)
+
+	for i = 2, #parts do
+		local part = parts[i] or ""
+		if part ~= "" then
+			part = part:gsub("^[\\/]+", ""):gsub("[\\/]+$", "")
+			if path == "" or path:sub(-1) == sep then
+				path = path .. part
+			else
+				path = path .. sep .. part
+			end
+		end
+	end
+
+	return path
+end
+
 local function ensure_fidget_notifier()
 	if M._fidget_checked then
 		return M._fidget_notify
