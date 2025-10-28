@@ -15,10 +15,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Neovim
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y neovim
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
 
       - name: Install test dependencies
         run: |
@@ -27,6 +26,6 @@ jobs:
 
       - name: Run tests
         run: |
-          nvim --headless -u tests/minimal_init.lua \
+          /home/runner/nvim-stable/bin/nvim --headless -u tests/minimal_init.lua \
             -c "lua require('plenary.test_harness').test_directory('tests', { minimal_init = 'tests/minimal_init.lua' })" \
             -c "qa"
