@@ -11,8 +11,9 @@ Get validation and completion for your Kubernetes manifests and CRDs, automatica
 
 - 🧠 **Auto-detects** `apiVersion` and `kind` in your YAML buffer
 - 🔗 **Injects the correct schema** for both built-in Kubernetes resources and CRDs
-- ⚡ **Hot reloads** schema on buffer changes
+- ⚡ **Debounced hot reloads** schema on buffer changes to keep editing snappy
 - 🧹 **Cleans up** temporary schema files on exit
+- 🔔 **Optional notifications** via [fidget.nvim](https://github.com/j-hui/fidget.nvim) when available
 - 🛠️ **Zero config** — just install and go!
 
 ---
@@ -32,10 +33,31 @@ Get validation and completion for your Kubernetes manifests and CRDs, automatica
 
 ## ⚙️ Configuration
 
-No configuration is required by default.
-Just call `require("kube-schema").setup()` in your plugin manager.
+No configuration is required by default — simply call:
 
-If you want to customize or extend, PRs and issues are welcome!
+```lua
+require("kube-schema").setup()
+```
+
+If you want to tune the behavior, `setup()` accepts a few options:
+
+| Option        | Type   | Default                       | Description |
+| ------------- | ------ | ----------------------------- | ----------- |
+| `debounce_ms` | number | `250`                         | Delay (in ms) before refreshing schemas after text changes. Set to `0` to disable debouncing altogether. |
+| `cache_dir`   | string | `vim.fn.stdpath("cache")`     | Directory where the combined schema files are stored. |
+
+Example:
+
+```lua
+require("kube-schema").setup({
+  debounce_ms = 150,
+  cache_dir = vim.fn.stdpath("data") .. "/kube-schema",
+})
+```
+
+> ℹ️ If [fidget.nvim](https://github.com/j-hui/fidget.nvim) is installed, kube-schema.nvim uses it to surface schema refresh progress and errors automatically.
+
+If you want to customize or extend further, PRs and issues are always welcome!
 
 In order to prevent the "Matches multiple schemas when only one must validate" error, you can use this helper function to configure `yamlls`:
 
@@ -74,7 +96,8 @@ settings = {
 - On opening a YAML file, the plugin scans for `apiVersion` and `kind`.
 - It matches these against built-in Kubernetes resources and CRDs.
 - The correct JSON schema(s) are combined and injected into the `yamlls` LSP client.
-- As you edit, the schema updates live.
+- If the file does not look Kubernetes-related yet, the plugin keeps a light-weight watch and upgrades once `apiVersion`/`kind` appear.
+- As you edit, the schema updates live (debounced to avoid unnecessary LSP churn).
 - Temporary schema files are cleaned up on exit.
 
 ---
