@@ -41,11 +41,11 @@ require("kube-schema").setup()
 
 If you want to tune the behavior, `setup()` accepts a few options:
 
-| Option        | Type   | Default                       | Description |
-| ------------- | ------ | ----------------------------- | ----------- |
-| `debounce_ms` | number | `250`                         | Delay (in ms) before refreshing schemas after text changes. Set to `0` to disable debouncing altogether. |
-| `cache_dir`   | string | `vim.fn.stdpath("cache")`     | Directory where the combined schema files are stored. |
-| `notifications` | boolean | `true`                     | Whether to surface schema updates/errors via fidget.nvim (when available) or fall back to `vim.notify`. |
+| Option          | Type    | Default                   | Description                                                                                              |
+| --------------- | ------- | ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `debounce_ms`   | number  | `250`                     | Delay (in ms) before refreshing schemas after text changes. Set to `0` to disable debouncing altogether. |
+| `cache_dir`     | string  | `vim.fn.stdpath("cache")` | Directory where the combined schema files are stored.                                                    |
+| `notifications` | boolean | `true`                    | Whether to surface schema updates/errors via fidget.nvim (when available) or fall back to `vim.notify`.  |
 
 Example:
 
@@ -125,6 +125,18 @@ The correct schema is automatically applied for validation and completion.
 
 - [Neovim 0.11+](https://neovim.io/)
 - [yaml-language-server](https://github.com/redhat-developer/yaml-language-server) (`yamlls`) enabled in your LSP setup
+
+---
+
+## 🩺 Health Check
+
+Run the built-in health check to verify your setup:
+
+```vim
+:checkhealth kube-schema
+```
+
+It reports Neovim version, cache directory status, `yamlls` availability, and optional dependencies like fidget.nvim.
 
 ---
 
