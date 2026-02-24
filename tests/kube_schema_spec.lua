@@ -6,6 +6,14 @@ local function reload_module()
 	return require("kube-schema")
 end
 
+local function read_schema_doc(path)
+	local fd = io.open(path, "r")
+	assert.is_not_nil(fd)
+	local content = fd:read("*a")
+	fd:close()
+	return vim.fn.json_decode(content)
+end
+
 local function make_client()
 	local notifications = {}
 	local requests = {}
@@ -56,6 +64,7 @@ describe("kube-schema.nvim", function()
 		kube_schema = reload_module()
 		kube_schema.config.cache_dir = tmpdir
 		kube_schema.config.debounce_ms = 0
+		kube_schema.config.openshift = false
 		kube_schema._schema_paths = {}
 		kube_schema._debounce_timers = {}
 		kube_schema._buffer_state = {}
@@ -129,6 +138,11 @@ describe("kube-schema.nvim", function()
 		local schema_path = next(client.notify_calls[1].payload.settings.yaml.schemas)
 		assert.is_not_nil(schema_path)
 		assert.equals(1, vim.fn.filereadable(schema_path))
+		local schema_doc = read_schema_doc(schema_path)
+		assert.equals(
+			"https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master-standalone-strict/deployment.json",
+			schema_doc.oneOf[1]["$ref"]
+		)
 
 		local ok_again = kube_schema.update_k8s_yaml_schema(buf, client, apis, kinds)
 		assert.is_true(ok_again)
@@ -202,5 +216,33 @@ describe("kube-schema.nvim", function()
 
 		assert.is_true(ok)
 		assert.is_false(fallback_called)
+	end)
+
+	it("uses openshift schema source when openshift support is enabled", function()
+		local buf = new_buffer("route.yaml", {
+			"apiVersion: route.openshift.io/v1",
+			"kind: Route",
+		})
+
+		local client = make_client()
+		vim.lsp.get_client_by_id = function()
+			return client
+		end
+
+		kube_schema.config.openshift = true
+		kube_schema.config.notifications = false
+
+		local apis, kinds = kube_schema.extract_k8s_api_and_kind(buf)
+		local ok = kube_schema.update_k8s_yaml_schema(buf, client, apis, kinds)
+
+		assert.is_true(ok)
+		assert.equals(1, #client.notify_calls)
+
+		local schema_path = next(client.notify_calls[1].payload.settings.yaml.schemas)
+		local schema_doc = read_schema_doc(schema_path)
+		assert.equals(
+			"https://raw.githubusercontent.com/melmorabity/openshift-json-schemas/main/v4.20-standalone-strict/route-route-v1.json",
+			schema_doc.oneOf[1]["$ref"]
+		)
 	end)
 end)

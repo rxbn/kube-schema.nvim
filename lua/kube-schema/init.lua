@@ -6,6 +6,8 @@ local default_config = {
 	cache_dir = vim.fn.stdpath("cache"),
 	debounce_ms = 250,
 	notifications = true,
+	openshift = false,
+	openshift_schema_dir = "v4.20-standalone-strict",
 }
 
 local k8s_combined_schema_template = {
@@ -16,6 +18,8 @@ M.config = {
 	cache_dir = default_config.cache_dir,
 	debounce_ms = default_config.debounce_ms,
 	notifications = default_config.notifications,
+	openshift = default_config.openshift,
+	openshift_schema_dir = default_config.openshift_schema_dir,
 }
 
 M._schema_paths = {}
@@ -26,6 +30,11 @@ M._fidget_notify = nil
 
 local builtin_resources = require("kube-schema.builtin_resources")
 local crd_kinds = require("kube-schema.crd_resources")
+
+local K8S_SCHEMA_BASE_URL =
+	"https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master-standalone-strict"
+local OPENSHIFT_SCHEMA_BASE_URL = "https://raw.githubusercontent.com/melmorabity/openshift-json-schemas/main"
+local CRD_SCHEMA_BASE_URL = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main"
 
 local function ensure_fidget_notifier()
 	if M._fidget_checked then
@@ -151,6 +160,18 @@ local function build_fingerprint(api_versions, kinds)
 	end
 
 	return table.concat(parts, "\031")
+end
+
+local function build_openshift_schema_url(api_version, kind)
+	local api_group, version = api_version:match("^([^/]+)/([^/]+)$")
+	local schema_dir = M.config.openshift_schema_dir or default_config.openshift_schema_dir
+	local base = OPENSHIFT_SCHEMA_BASE_URL .. "/" .. schema_dir
+	if version then
+		local group_prefix = api_group:match("^[^.]+") or api_group
+		return base .. "/" .. kind .. "-" .. group_prefix .. "-" .. version .. ".json"
+	end
+
+	return base .. "/" .. kind .. "-" .. api_version .. ".json"
 end
 
 local function debounce_schema_update(bufnr, callback)
@@ -318,23 +339,26 @@ M.generate_k8s_combined_schema = function(bufnr, api_versions, kinds)
 			local api_group = api_version:match("^[^/]+")
 			local is_builtin = vim.tbl_contains(builtin_resources, api_version .. ":" .. kind)
 			local is_crd = vim.tbl_contains(crd_kinds, api_version .. ":" .. kind)
+			local is_openshift_resource = api_version:find("openshift%.io", 1, false) ~= nil
 
 			if is_builtin then
+				local ref
+				if M.config.openshift then
+					ref = build_openshift_schema_url(api_version, kind)
+				else
+					ref = K8S_SCHEMA_BASE_URL .. "/" .. kind .. ".json"
+				end
 				table.insert(k8s_combined_schema_template.oneOf, {
-					["$ref"] = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master-standalone-strict/"
-						.. kind
-						.. ".json",
+					["$ref"] = ref,
+				})
+			elseif M.config.openshift and is_openshift_resource then
+				table.insert(k8s_combined_schema_template.oneOf, {
+					["$ref"] = build_openshift_schema_url(api_version, kind),
 				})
 			elseif is_crd then
 				local api_version_suffix = api_version:match("/?(v%d+.*)")
 				table.insert(k8s_combined_schema_template.oneOf, {
-					["$ref"] = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/"
-						.. api_group
-						.. "/"
-						.. kind
-						.. "_"
-						.. api_version_suffix
-						.. ".json",
+					["$ref"] = CRD_SCHEMA_BASE_URL .. "/" .. api_group .. "/" .. kind .. "_" .. api_version_suffix .. ".json",
 				})
 			end
 		end
@@ -438,6 +462,12 @@ M.setup = function(opts)
 	if opts.notifications ~= nil then
 		opts.notifications = not not opts.notifications
 	end
+	if opts.openshift ~= nil then
+		opts.openshift = not not opts.openshift
+	end
+	if opts.openshift_schema_dir ~= nil then
+		opts.openshift_schema_dir = tostring(opts.openshift_schema_dir)
+	end
 
 	M.config = vim.tbl_deep_extend("force", {}, default_config, M.config or {}, opts)
 
@@ -450,6 +480,12 @@ M.setup = function(opts)
 	end
 	if type(M.config.notifications) ~= "boolean" then
 		M.config.notifications = default_config.notifications
+	end
+	if type(M.config.openshift) ~= "boolean" then
+		M.config.openshift = default_config.openshift
+	end
+	if type(M.config.openshift_schema_dir) ~= "string" or M.config.openshift_schema_dir == "" then
+		M.config.openshift_schema_dir = default_config.openshift_schema_dir
 	end
 
 	local autogroup = vim.api.nvim_create_augroup("kube-schema", { clear = true })

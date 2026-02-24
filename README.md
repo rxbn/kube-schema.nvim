@@ -46,6 +46,8 @@ If you want to tune the behavior, `setup()` accepts a few options:
 | `debounce_ms`   | number  | `250`                     | Delay (in ms) before refreshing schemas after text changes. Set to `0` to disable debouncing altogether. |
 | `cache_dir`     | string  | `vim.fn.stdpath("cache")` | Directory where the combined schema files are stored.                                                    |
 | `notifications` | boolean | `true`                    | Whether to surface schema updates/errors via fidget.nvim (when available) or fall back to `vim.notify`.  |
+| `openshift`     | boolean | `false`                   | Enable OpenShift schema support and fetch OpenShift/Kubernetes built-ins from `melmorabity/openshift-json-schemas`. |
+| `openshift_schema_dir` | string | `"v4.20-standalone-strict"` | Directory inside `melmorabity/openshift-json-schemas` used when `openshift = true` (for example `v4.20-standalone-strict`). |
 
 Example:
 
@@ -54,6 +56,8 @@ require("kube-schema").setup({
   debounce_ms = 150,
   cache_dir = vim.fn.stdpath("data") .. "/kube-schema",
   notifications = false,
+  openshift = true,
+  openshift_schema_dir = "v4.20-standalone-strict",
 })
 ```
 
@@ -145,6 +149,9 @@ It reports Neovim version, cache directory status, `yamlls` availability, and op
 **Q: Does this work with custom CRDs?**
 A: Yes! If your CRD is in the [datreeio/CRDs-catalog](https://github.com/datreeio/CRDs-catalog), it will be picked up automatically.
 
+**Q: Does it support OpenShift resources?**
+A: Yes. Set `openshift = true` in `setup()` to fetch schemas from [melmorabity/openshift-json-schemas](https://github.com/melmorabity/openshift-json-schemas/tree/main), and optionally set `openshift_schema_dir` (for example `v4.20-standalone-strict`).
+
 **Q: Does it support multiple resources in one file?**
 A: Yes, all detected resources are combined into a single schema.
 
@@ -169,6 +176,7 @@ Feel free to open an issue if you have any questions or suggestions.
 ## 🙏 Credits
 
 - [yannh/kubernetes-json-schema](https://github.com/yannh/kubernetes-json-schema)
+- [melmorabity/openshift-json-schemas](https://github.com/melmorabity/openshift-json-schemas/tree/main)
 - [datreeio/CRDs-catalog](https://github.com/datreeio/CRDs-catalog)
 - [someone-stole-my-name/yaml-companion.nvim](https://github.com/someone-stole-my-name/yaml-companion.nvim)
 

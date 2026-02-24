@@ -127,6 +127,12 @@ M.check = function()
 	if config.notifications == false then
 		reporter.info("notifications are disabled (config.notifications = false)")
 	end
+	if config.openshift == true then
+		reporter.info("openshift schema support is enabled (config.openshift = true)")
+		if type(config.openshift_schema_dir) == "string" and config.openshift_schema_dir ~= "" then
+			reporter.info(("openshift schema directory: %s"):format(config.openshift_schema_dir))
+		end
+	end
 end
 
 return M
