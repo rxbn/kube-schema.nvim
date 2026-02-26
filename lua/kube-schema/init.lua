@@ -30,6 +30,7 @@ M._fidget_notify = nil
 
 local builtin_resources = require("kube-schema.builtin_resources")
 local crd_kinds = require("kube-schema.crd_resources")
+local openshift_resources = require("kube-schema.openshift_resources")
 
 local K8S_SCHEMA_BASE_URL =
 	"https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/master-standalone-strict"
@@ -337,23 +338,18 @@ M.generate_k8s_combined_schema = function(bufnr, api_versions, kinds)
 		local kind = kinds[i]
 		if api_version and kind then
 			local api_group = api_version:match("^[^/]+")
-			local is_builtin = vim.tbl_contains(builtin_resources, api_version .. ":" .. kind)
-			local is_crd = vim.tbl_contains(crd_kinds, api_version .. ":" .. kind)
-			local is_openshift_resource = api_version:find("openshift%.io", 1, false) ~= nil
+			local resource_id = api_version .. ":" .. kind
+			local is_builtin = vim.tbl_contains(builtin_resources, resource_id)
+			local is_crd = vim.tbl_contains(crd_kinds, resource_id)
+			local has_openshift_schema = M.config.openshift and vim.tbl_contains(openshift_resources, resource_id)
 
-			if is_builtin then
-				local ref
-				if M.config.openshift then
-					ref = build_openshift_schema_url(api_version, kind)
-				else
-					ref = K8S_SCHEMA_BASE_URL .. "/" .. kind .. ".json"
-				end
-				table.insert(k8s_combined_schema_template.oneOf, {
-					["$ref"] = ref,
-				})
-			elseif M.config.openshift and is_openshift_resource then
+			if has_openshift_schema then
 				table.insert(k8s_combined_schema_template.oneOf, {
 					["$ref"] = build_openshift_schema_url(api_version, kind),
+				})
+			elseif is_builtin then
+				table.insert(k8s_combined_schema_template.oneOf, {
+					["$ref"] = K8S_SCHEMA_BASE_URL .. "/" .. kind .. ".json",
 				})
 			elseif is_crd then
 				local api_version_suffix = api_version:match("/?(v%d+.*)")

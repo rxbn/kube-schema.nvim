@@ -1,0 +1,36 @@
+---
+name: Generate OpenShift resources
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Generate
+        run: bash ./hack/generate_openshift_resources.sh > ./lua/kube-schema/openshift_resources.lua
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "openshift-resources"
+          delete-branch: true
+          title: "update OpenShift resources"
+          signoff: true
+          committer: "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
+          author: "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
+          assignees: "rxbn"
+          commit-message: "chore: update OpenShift resources"
+          body: |
+            Update OpenShift resources.

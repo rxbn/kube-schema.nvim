@@ -83,6 +83,7 @@ end
 local function check_resources(reporter)
 	local builtin = require("kube-schema.builtin_resources")
 	local crds = require("kube-schema.crd_resources")
+	local openshift = require("kube-schema.openshift_resources")
 
 	if type(builtin) == "table" and #builtin > 0 then
 		reporter.ok(("builtin resource list loaded (%d entries)"):format(#builtin))
@@ -94,6 +95,12 @@ local function check_resources(reporter)
 		reporter.ok(("CRD resource list loaded (%d entries)"):format(#crds))
 	else
 		reporter.warn("CRD resource list is empty or unavailable")
+	end
+
+	if type(openshift) == "table" and #openshift > 0 then
+		reporter.ok(("OpenShift resource list loaded (%d entries)"):format(#openshift))
+	else
+		reporter.warn("OpenShift resource list is empty or unavailable")
 	end
 end
 

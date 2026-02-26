@@ -46,7 +46,7 @@ If you want to tune the behavior, `setup()` accepts a few options:
 | `debounce_ms`   | number  | `250`                     | Delay (in ms) before refreshing schemas after text changes. Set to `0` to disable debouncing altogether. |
 | `cache_dir`     | string  | `vim.fn.stdpath("cache")` | Directory where the combined schema files are stored.                                                    |
 | `notifications` | boolean | `true`                    | Whether to surface schema updates/errors via fidget.nvim (when available) or fall back to `vim.notify`.  |
-| `openshift`     | boolean | `false`                   | Enable OpenShift schema support and fetch OpenShift/Kubernetes built-ins from `melmorabity/openshift-json-schemas`. |
+| `openshift`     | boolean | `false`                   | Enable OpenShift schema support using the generated OpenShift resource index from `melmorabity/openshift-json-schemas`. |
 | `openshift_schema_dir` | string | `"v4.20-standalone-strict"` | Directory inside `melmorabity/openshift-json-schemas` used when `openshift = true` (for example `v4.20-standalone-strict`). |
 
 Example:
@@ -101,6 +101,7 @@ settings = {
 
 - On opening a YAML file, the plugin scans for `apiVersion` and `kind`.
 - It matches these against built-in Kubernetes resources and CRDs.
+- When `openshift = true`, it also matches against a generated OpenShift resource list.
 - The correct JSON schema(s) are combined and injected into the `yamlls` LSP client.
 - If the file does not look Kubernetes-related yet, the plugin keeps a light-weight watch and upgrades once `apiVersion`/`kind` appear.
 - As you edit, the schema updates live (debounced to avoid unnecessary LSP churn).
@@ -151,6 +152,7 @@ A: Yes! If your CRD is in the [datreeio/CRDs-catalog](https://github.com/datreei
 
 **Q: Does it support OpenShift resources?**
 A: Yes. Set `openshift = true` in `setup()` to fetch schemas from [melmorabity/openshift-json-schemas](https://github.com/melmorabity/openshift-json-schemas/tree/main), and optionally set `openshift_schema_dir` (for example `v4.20-standalone-strict`).
+Only resources present in the generated OpenShift index are referenced, so unknown resources are skipped instead of generating broken `$ref` URLs.
 
 **Q: Does it support multiple resources in one file?**
 A: Yes, all detected resources are combined into a single schema.

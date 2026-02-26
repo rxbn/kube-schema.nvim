@@ -245,4 +245,53 @@ describe("kube-schema.nvim", function()
 			schema_doc.oneOf[1]["$ref"]
 		)
 	end)
+
+	it("prefers CRD catalog for openshift.io CRDs when openshift support is enabled", function()
+		local buf = new_buffer("clusterlogging.yaml", {
+			"apiVersion: logging.openshift.io/v1",
+			"kind: ClusterLogging",
+		})
+
+		local client = make_client()
+		vim.lsp.get_client_by_id = function()
+			return client
+		end
+
+		kube_schema.config.openshift = true
+		kube_schema.config.notifications = false
+
+		local apis, kinds = kube_schema.extract_k8s_api_and_kind(buf)
+		local ok = kube_schema.update_k8s_yaml_schema(buf, client, apis, kinds)
+
+		assert.is_true(ok)
+		assert.equals(1, #client.notify_calls)
+
+		local schema_path = next(client.notify_calls[1].payload.settings.yaml.schemas)
+		local schema_doc = read_schema_doc(schema_path)
+		assert.equals(
+			"https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/logging.openshift.io/clusterlogging_v1.json",
+			schema_doc.oneOf[1]["$ref"]
+		)
+	end)
+
+	it("skips unknown openshift resources without creating broken schema references", function()
+		local buf = new_buffer("dpa.yaml", {
+			"apiVersion: oadp.openshift.io/v1alpha1",
+			"kind: DataProtectionApplication",
+		})
+
+		local client = make_client()
+		vim.lsp.get_client_by_id = function()
+			return client
+		end
+
+		kube_schema.config.openshift = true
+		kube_schema.config.notifications = false
+
+		local apis, kinds = kube_schema.extract_k8s_api_and_kind(buf)
+		local ok = kube_schema.update_k8s_yaml_schema(buf, client, apis, kinds)
+
+		assert.is_false(ok)
+		assert.equals(0, #client.notify_calls)
+	end)
 end)
