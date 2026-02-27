@@ -1514,6 +1514,7 @@ return {
   "opentelemetry.io/v1alpha1:instrumentation",
   "opentelemetry.io/v1alpha1:opampbridge",
   "opentelemetry.io/v1alpha1:opentelemetrycollector",
+  "opentelemetry.io/v1alpha1:targetallocator",
   "opentelemetry.io/v1beta1:opentelemetrycollector",
   "operator.cluster.x-k8s.io/v1alpha1:bootstrapprovider",
   "operator.cluster.x-k8s.io/v1alpha1:controlplaneprovider",
