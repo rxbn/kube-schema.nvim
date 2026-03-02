@@ -355,7 +355,14 @@ M.generate_k8s_combined_schema = function(bufnr, api_versions, kinds)
 				local _, api_version_suffix = api_version:match("^([^/]+)/([^/]+)$")
 				if api_version_suffix then
 					table.insert(k8s_combined_schema_template.oneOf, {
-						["$ref"] = CRD_SCHEMA_BASE_URL .. "/" .. api_group .. "/" .. kind .. "_" .. api_version_suffix .. ".json",
+						["$ref"] = CRD_SCHEMA_BASE_URL
+							.. "/"
+							.. api_group
+							.. "/"
+							.. kind
+							.. "_"
+							.. api_version_suffix
+							.. ".json",
 					})
 				end
 			end

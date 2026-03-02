@@ -41,13 +41,13 @@ require("kube-schema").setup()
 
 If you want to tune the behavior, `setup()` accepts a few options:
 
-| Option          | Type    | Default                   | Description                                                                                              |
-| --------------- | ------- | ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `debounce_ms`   | number  | `250`                     | Delay (in ms) before refreshing schemas after text changes. Set to `0` to disable debouncing altogether. |
-| `cache_dir`     | string  | `vim.fn.stdpath("cache")` | Directory where the combined schema files are stored.                                                    |
-| `notifications` | boolean | `true`                    | Whether to surface schema updates/errors via fidget.nvim (when available) or fall back to `vim.notify`.  |
-| `openshift`     | boolean | `false`                   | Enable OpenShift schema support using the generated OpenShift resource index from `melmorabity/openshift-json-schemas`. |
-| `openshift_schema_dir` | string | `"v4.20-standalone-strict"` | Directory inside `melmorabity/openshift-json-schemas` used when `openshift = true` (for example `v4.20-standalone-strict`). |
+| Option                 | Type    | Default                     | Description                                                                                                                 |
+| ---------------------- | ------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `debounce_ms`          | number  | `250`                       | Delay (in ms) before refreshing schemas after text changes. Set to `0` to disable debouncing altogether.                    |
+| `cache_dir`            | string  | `vim.fn.stdpath("cache")`   | Directory where the combined schema files are stored.                                                                       |
+| `notifications`        | boolean | `true`                      | Whether to surface schema updates/errors via fidget.nvim (when available) or fall back to `vim.notify`.                     |
+| `openshift`            | boolean | `false`                     | Enable OpenShift schema support using the generated OpenShift resource index from `melmorabity/openshift-json-schemas`.     |
+| `openshift_schema_dir` | string  | `"v4.20-standalone-strict"` | Directory inside `melmorabity/openshift-json-schemas` used when `openshift = true` (for example `v4.20-standalone-strict`). |
 
 Example:
 
