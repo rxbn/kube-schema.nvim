@@ -211,6 +211,8 @@ return {
   "resource.k8s.io/v1alpha3:deleteoptions",
   "resource.k8s.io/v1alpha3:devicetaintrule",
   "resource.k8s.io/v1alpha3:devicetaintrulelist",
+  "resource.k8s.io/v1alpha3:resourcepoolstatusrequest",
+  "resource.k8s.io/v1alpha3:resourcepoolstatusrequestlist",
   "resource.k8s.io/v1alpha3:watchevent",
   "resource.k8s.io/v1beta1:deleteoptions",
   "resource.k8s.io/v1beta1:deviceclass",
