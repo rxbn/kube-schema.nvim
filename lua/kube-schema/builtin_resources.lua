@@ -195,6 +195,8 @@ return {
   "resource.k8s.io/v1:deleteoptions",
   "resource.k8s.io/v1:deviceclass",
   "resource.k8s.io/v1:deviceclasslist",
+  "resource.k8s.io/v1:devicetaintrule",
+  "resource.k8s.io/v1:devicetaintrulelist",
   "resource.k8s.io/v1:resourceclaim",
   "resource.k8s.io/v1:resourceclaimlist",
   "resource.k8s.io/v1:resourceclaimtemplate",
