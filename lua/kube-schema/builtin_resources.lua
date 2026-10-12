@@ -74,6 +74,8 @@ return {
   "authorization.k8s.io/v1:selfsubjectrulesreview",
   "authorization.k8s.io/v1:subjectaccessreview",
   "authorization.k8s.io/v1:watchevent",
+  "authorization.k8s.io/v1alpha1:deleteoptions",
+  "authorization.k8s.io/v1alpha1:watchevent",
   "authorization.k8s.io/v1beta1:deleteoptions",
   "authorization.k8s.io/v1beta1:watchevent",
   "autoscaling/v1:deleteoptions",
