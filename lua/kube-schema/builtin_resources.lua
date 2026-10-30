@@ -248,6 +248,8 @@ return {
   "scheduling.k8s.io/v1alpha3:watchevent",
   "scheduling.k8s.io/v1alpha3:workload",
   "scheduling.k8s.io/v1alpha3:workloadlist",
+  "scheduling.k8s.io/v1beta1:compositepodgroup",
+  "scheduling.k8s.io/v1beta1:compositepodgrouplist",
   "scheduling.k8s.io/v1beta1:deleteoptions",
   "scheduling.k8s.io/v1beta1:podgroup",
   "scheduling.k8s.io/v1beta1:podgrouplist",
